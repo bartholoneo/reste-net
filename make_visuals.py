@@ -26,7 +26,8 @@ MARKER = (255, 231, 106)
 RED = (192, 57, 43)
 BLUE = (47, 95, 143)
 # Ordonnée (px) du haut de chaque recadrage dans les rendus pleine page ; à ajuster si la mise en page change.
-CROPS = {'comparateur': 935, 'inverse': 1780, 'gratuite': 470}
+CROPS = {'comparateur': 1000, 'tresorerie': 2330, 'objectif': 3300, 'statut': 4220, 'inverse': 5560, 'gratuite': 530}
+TALL_FULL, TALL_FREE = 7000, 3600
 FONT_BOLD = str(ROOT / 'visuels' / 'fonts' / 'Caveat-Variable.ttf')
 FONT_REG = str(ROOT / 'visuels' / 'fonts' / 'PatrickHand-Regular.ttf')
 
@@ -218,9 +219,9 @@ def make_shots() -> None:
     tall_full = VIS / '_full-light-tall.png'
     tall_free = VIS / '_free-light-tall.png'
     tall_dark = VIS / '_full-dark-tall.png'
-    shot(full.as_uri() + '?theme=light', tall_full, 1366, 3200)
-    shot(free.as_uri() + '?theme=light', tall_free, 1366, 2400)
-    shot(full.as_uri() + '?theme=dark', tall_dark, 1366, 3200, dark=True)
+    shot(full.as_uri() + '?theme=light', tall_full, 1366, TALL_FULL)
+    shot(free.as_uri() + '?theme=light', tall_free, 1366, TALL_FREE)
+    shot(full.as_uri() + '?theme=dark', tall_dark, 1366, TALL_FULL, dark=True)
 
     def crop(src: Path, top: int, out: Path) -> None:
         Image.open(src).crop((0, top, 1366, top + 768)).save(out)
@@ -229,6 +230,9 @@ def make_shots() -> None:
     crop(tall_full, CROPS['inverse'], VIS / 'capture-2-inverse.png')
     crop(tall_free, CROPS['gratuite'], VIS / 'capture-3-gratuite.png')
     crop(tall_dark, CROPS['comparateur'], VIS / 'capture-4-sombre.png')
+    crop(tall_full, CROPS['tresorerie'], VIS / 'capture-5-tresorerie.png')
+    crop(tall_full, CROPS['objectif'], VIS / 'capture-6-objectif.png')
+    crop(tall_full, CROPS['statut'], VIS / 'capture-7-statut-jalons.png')
     (ROOT / 'app' / 'screenshots').mkdir(exist_ok=True)
     Image.open(VIS / 'capture-1-comparateur.png').convert('RGB').save(ROOT / 'app' / 'screenshots' / 'comparateur.png')
     for tmp in (tall_full, tall_free, tall_dark):

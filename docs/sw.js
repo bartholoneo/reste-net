@@ -1,5 +1,5 @@
 /* Reste Net — service worker : cache-first, mise à jour en arrière-plan. La version est remplacée par build.py. */
-const CACHE = 'reste-net-2026-10-02c';
+const CACHE = 'reste-net-1.1.0';
 const ASSETS = ['./', './index.html', './store.html', './styles.css', './rates.js', './calc.js', './app.js', './manifest.webmanifest', './manifest-store.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './fonts/caveat.woff2', './fonts/patrick-hand.woff2'];
 
 self.addEventListener('install', (e) => {
