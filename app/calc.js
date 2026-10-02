@@ -119,7 +119,78 @@
     return Math.ceil(hi * 100) / 100;
   }
 
-  const api = { toEur: toEur, round2: round2, effectivePlatform: effectivePlatform, platformFee: platformFee, levies: levies, compute: compute, inversePrice: inversePrice };
+  /* Nombre de ventes par mois nécessaires pour toucher targetNet net sur le mois, après frais fixes (fixedCosts).
+     Recherche par doublement puis bissection sur n (le net mensuel croît avec n). null si impossible. */
+  function salesNeeded(platform, input, targetNet, fixedCosts) {
+    const f = function (n) { return compute(platform, Object.assign({}, input, { nSales: n })).month.net - (fixedCosts || 0); };
+    const perSale = compute(platform, Object.assign({}, input, { nSales: 1 })).perSale.net;
+    if (perSale <= 0) return null;
+    let lo = 0, hi = 1;
+    while (f(hi) < targetNet && hi < 1e6) hi *= 2;
+    if (hi >= 1e6) return null;
+    while (hi - lo > 1) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (f(mid) < targetNet) lo = mid; else hi = mid;
+    }
+    return hi;
+  }
+
+  /* Délai estimé avant le premier versement sur le compte, à ce rythme de ventes.
+     Retour : { monthsToMinimum, days, reachable } ; days = jours avant le premier argent sur le compte. */
+  function firstPayout(platform, input) {
+    const usd = input.usdToEur;
+    const p = platform.payout || { minimum: 0, minimumCurrency: 'EUR', delayDays: 0, schedule: 'ondemand' };
+    const r = compute(platform, input);
+    const monthlyReceived = r.month.received;
+    const minimum = toEur(p.minimum || 0, p.minimumCurrency || 'EUR', usd);
+    if (monthlyReceived <= 0) return { monthsToMinimum: null, days: null, reachable: false };
+    const months = minimum > 0 ? Math.max(1, Math.ceil(minimum / monthlyReceived)) : 1;
+    // première vente au jour 0 ; les ventes du mois s'étalent : le seuil est atteint vers la fin du mois « months »
+    let days = (months - 1) * 30 + (months > 1 ? 30 : Math.min(30, Math.ceil(30 * (minimum / monthlyReceived))));
+    if (p.schedule === 'instant') days = 0;
+    else if (p.schedule === 'monthly') days += 15 + (p.delayDays || 0);   // attente moyenne du cycle mensuel
+    else if (p.schedule === 'weekly') days += 4 + (p.delayDays || 0);
+    else days += (p.delayDays || 0);
+    return { monthsToMinimum: months, days: Math.round(days), reachable: true, minimumEur: minimum };
+  }
+
+  /* Comparaison des statuts pour une plateforme : prélèvements et net sur l'année, à ce rythme. */
+  function statusMatrix(platform, input, statuses) {
+    return statuses.map(function (st) {
+      const r = compute(platform, Object.assign({}, input, { status: st }));
+      return {
+        statusId: st.id, statusName: st.name,
+        annualGross: r.month.gross * 12, annualBank: r.month.bank * 12,
+        annualSocial: r.month.social * 12, annualTax: (r.month.incomeTax + r.month.prelevements) * 12,
+        annualNet: r.month.net * 12, socialRate: r.socialRate,
+      };
+    });
+  }
+
+  /* Jalons franchis ou à venir à ce rythme (annualCA en euros, monthlyCA pour dater le franchissement). */
+  function milestones(thresholds, annualCA, monthlyCA, statusId, nSales) {
+    return thresholds.filter(function (t) { return !t.statuses || t.statuses.indexOf(statusId) >= 0; }).map(function (t) {
+      if (t.whenMonthly) {
+        const hit = nSales >= 1;
+        return Object.assign({}, t, { reached: hit, monthReached: hit ? 1 : null, salesNeededPerMonth: null });
+      }
+      if (t.isRfr) return Object.assign({}, t, { reached: null, monthReached: null, salesNeededPerMonth: null });
+      const reached = annualCA >= t.amount;
+      const monthReached = reached && monthlyCA > 0 ? Math.max(1, Math.ceil(t.amount / monthlyCA)) : null;
+      return Object.assign({}, t, { reached: reached, monthReached: monthReached, salesNeededPerMonth: null });
+    });
+  }
+
+  /* Tranche marginale d'imposition d'après un revenu imposable annuel par part. */
+  function tmiFor(brackets, taxableIncomePerPart) {
+    for (let i = 0; i < brackets.length; i++) {
+      if (brackets[i].upTo == null || taxableIncomePerPart <= brackets[i].upTo) return brackets[i].rate;
+    }
+    return brackets[brackets.length - 1].rate;
+  }
+
+  const api = { toEur: toEur, round2: round2, effectivePlatform: effectivePlatform, platformFee: platformFee, levies: levies, compute: compute, inversePrice: inversePrice,
+    salesNeeded: salesNeeded, firstPayout: firstPayout, statusMatrix: statusMatrix, milestones: milestones, tmiFor: tmiFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.ResteNetCalc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

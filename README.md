@@ -3,7 +3,9 @@
 Calculateur de net pour les vendeurs et micro-entrepreneurs français. On part du prix payé par le client et on déroule la cascade jusqu'au compte en banque : frais de la plateforme (Gumroad, Polar.sh, Stripe, ComeUp, Fiverr, itch.io, Microsoft Store, Google Play, Steam, Apple, vente directe), frais de retrait, cotisations URSSAF 2026 selon le statut, impôt sur le revenu.
 
 **Version gratuite** : https://bartholoneo.github.io/reste-net/ (une plateforme à la fois, installable, hors ligne).
-**Version complète** (3 €, fichier hors ligne + clé pour la version web) : comparateur multi-plateformes, statuts et cotisations, calcul inverse, simulation mensuelle, export CSV, scénarios. Disponible sur Gumroad et Polar, et sur le Microsoft Store.
+**Version complète** (3 €, fichier hors ligne + clé pour la version web) : comparateur multi-plateformes avec graphique, statuts et cotisations, **qui te paie en premier** (seuils, délais, premier versement), **objectif et point mort**, **quel statut rapporte le plus**, **jalons réglementaires à ton rythme**, calcul inverse, simulation mensuelle, export CSV, scénarios. Disponible sur Gumroad et Polar, et sur le Microsoft Store.
+
+Les deux éditions : lien de partage qui rouvre le calcul, résumé à copier, aide au choix de la tranche d'impôt, prix TTC client pour les plateformes vendeur officiel.
 
 Aucune donnée ne quitte l'appareil. Les taux de plateformes ont été vérifiés le 24/09/2026 et sont tous modifiables dans l'outil. Outil indicatif : ni conseil fiscal ni conseil comptable.
 
