@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reste Net — Combien il me reste vraiment ?</title>
+  <meta name="description" content="Calculateur de net pour vendeurs et micro-entrepreneurs français : frais Gumroad, Polar, ComeUp, Fiverr, itch.io, Microsoft Store, Google Play, cotisations URSSAF 2026 et impôt. Combien il te reste vraiment sur chaque vente.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script>window.RESTE_NET_EDITION = window.RESTE_NET_EDITION || 'free';</script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icons/icon-192.png" alt="" width="44" height="44">
+      <div>
+        <h1>Reste Net</h1>
+        <p class="tagline">Combien il me reste vraiment ?</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="editionBadge" class="badge" aria-live="polite"></span>
+      <button id="themeBtn" type="button" class="btn-icon" aria-label="Changer de thème" title="Thème clair / sombre">◐</button>
+      <button id="licenseBtn" type="button" class="btn-ghost">J'ai une clé</button>
+      <a id="buyBtn" class="btn-primary" href="#" target="_blank" rel="noopener">Version complète · 3 €</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="saleCard">
+      <h2><span class="num">1</span> Ma vente</h2>
+      <div class="grid3">
+        <label class="field">
+          <span>Prix payé par le client</span>
+          <span class="input-unit"><input id="price" type="number" inputmode="decimal" min="0" step="0.01" value="5"><em>€</em></span>
+        </label>
+        <label class="field full-only" id="nSalesWrap">
+          <span>Ventes sur le mois</span>
+          <span class="input-unit"><input id="nSales" type="number" inputmode="numeric" min="1" step="1" value="1"><em>ventes</em></span>
+        </label>
+        <label class="field full-only" id="nWithdrawWrap">
+          <span>Retraits vers ma banque sur le mois</span>
+          <span class="input-unit"><input id="nWithdraw" type="number" inputmode="numeric" min="0" step="1" value="1"><em>retraits</em></span>
+        </label>
+      </div>
+      <fieldset class="platforms">
+        <legend id="platformsLegend">Plateforme</legend>
+        <div id="platformChips" class="chips"></div>
+        <div id="platformOptions" class="options"></div>
+      </fieldset>
+    </section>
+
+    <section class="card lockable" id="statusCard" data-lock-title="Statut et cotisations" data-lock-text="Particulier occasionnel ou micro-entreprise, cotisations URSSAF 2026, ACRE, versement libératoire, impôt : dans la version complète.">
+      <h2><span class="num">2</span> Mon statut</h2>
+      <div class="grid3">
+        <label class="field">
+          <span>Statut</span>
+          <select id="status"></select>
+        </label>
+        <label class="field">
+          <span>Ma tranche marginale d'impôt</span>
+          <select id="tmi"></select>
+        </label>
+        <div class="field checks">
+          <label><input type="checkbox" id="acre"> ACRE (première année)</label>
+          <label><input type="checkbox" id="vl"> Versement libératoire de l'impôt</label>
+          <label><input type="checkbox" id="includeTax" checked> Inclure l'impôt sur le revenu</label>
+        </div>
+      </div>
+      <p class="hint" id="statusNote"></p>
+    </section>
+
+    <section class="card" id="resultsCard">
+      <h2><span class="num">3</span> Ce qu'il me reste</h2>
+      <div id="results" aria-live="polite"></div>
+      <p class="hint" id="resultsHint"></p>
+    </section>
+
+    <section class="card lockable" id="inverseCard" data-lock-title="Calcul inverse" data-lock-text="« Je veux toucher 10 € net : quel prix afficher sur chaque plateforme ? » Dans la version complète.">
+      <h2><span class="num">4</span> Calcul inverse</h2>
+      <label class="field inline">
+        <span>Je veux toucher, par vente, un net de</span>
+        <span class="input-unit"><input id="targetNet" type="number" inputmode="decimal" min="0" step="0.01" value="10"><em>€</em></span>
+      </label>
+      <div id="inverseResults"></div>
+    </section>
+
+    <section class="card lockable" id="toolsCard" data-lock-title="Exporter et enregistrer" data-lock-text="Export CSV, impression PDF et scénarios enregistrés sur ton appareil : dans la version complète.">
+      <h2><span class="num">5</span> Exporter et enregistrer</h2>
+      <div class="toolbar">
+        <button type="button" id="csvBtn" class="btn-ghost">Exporter en CSV</button>
+        <button type="button" id="printBtn" class="btn-ghost">Imprimer / PDF</button>
+        <span class="spacer"></span>
+        <input id="scenarioName" type="text" placeholder="Nom du scénario" maxlength="60">
+        <button type="button" id="saveBtn" class="btn-primary">Enregistrer le scénario</button>
+      </div>
+      <ul id="scenarioList" class="scenarios"></ul>
+    </section>
+
+    <details class="card" id="settingsCard">
+      <summary><h2><span class="num">⚙</span> Paramètres et taux (tout est modifiable)</h2></summary>
+      <div class="grid3">
+        <label class="field">
+          <span>Taux de change 1 $ =</span>
+          <span class="input-unit"><input id="usdToEur" type="number" inputmode="decimal" min="0" step="0.01"><em>€</em></span>
+        </label>
+        <label class="field checks">
+          <input type="checkbox" id="forceGross"> Prudence : toujours déclarer le prix client comme chiffre d'affaires
+        </label>
+        <div class="field">
+          <button type="button" id="resetBtn" class="btn-ghost">Réinitialiser tous les taux</button>
+        </div>
+      </div>
+      <h3>Plateformes</h3>
+      <div id="platformSettings" class="settings-grid"></div>
+      <h3>Statuts</h3>
+      <div id="statusSettings" class="settings-grid"></div>
+      <p class="hint" id="ratesMeta"></p>
+    </details>
+  </main>
+
+  <footer>
+    <p><strong>Outil indicatif.</strong> Reste Net n'est ni un conseil fiscal ni un conseil comptable. Les taux de plateformes ont été vérifiés le <span id="verifiedOn"></span> ; les taux de cotisations sont ceux publiés par l'URSSAF pour 2026 ; les éléments marqués « estimation » ne sont pas vérifiés. Les plateformes changent leurs tarifs : vérifie avant de fixer un prix. La base de chiffre d'affaires à déclarer (prix client ou montant reversé) suit la lecture dominante et reste à confirmer avec l'URSSAF.</p>
+    <p>Aucune donnée ne quitte ton appareil : tout est calculé dans ton navigateur et les scénarios sont stockés localement. Fait par <a href="https://github.com/bartholoneo" target="_blank" rel="noopener">Bartholoneo</a> · <a id="footerBuy" href="#" target="_blank" rel="noopener">Version complète 3 €</a> · <span id="versionLabel"></span></p>
+  </footer>
+
+  <dialog id="licenseDialog">
+    <form method="dialog" id="licenseForm">
+      <h2>Déverrouiller la version complète</h2>
+      <p>Colle la clé reçue après ton achat sur Gumroad ou Polar. La clé est vérifiée une fois puis mémorisée sur cet appareil.</p>
+      <label class="field"><span>Clé de licence</span><input id="licenseKey" type="text" autocomplete="off" spellcheck="false" required></label>
+      <p id="licenseMsg" class="hint" aria-live="polite"></p>
+      <div class="toolbar">
+        <button type="button" id="licenseCancel" class="btn-ghost">Annuler</button>
+        <span class="spacer"></span>
+        <button type="submit" id="licenseSubmit" class="btn-primary">Vérifier</button>
+      </div>
+      <p class="hint">Pas encore de clé ? <a id="dialogBuy" href="#" target="_blank" rel="noopener">Acheter la version complète (3 €)</a>. Tu reçois aussi le fichier hors ligne.</p>
+    </form>
+  </dialog>
+
+  <script src="rates.js"></script>
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

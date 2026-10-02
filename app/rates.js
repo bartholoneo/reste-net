@@ -1,0 +1,152 @@
+/* Reste Net — données de taux. Tout est modifiable dans l'interface.
+   Dates de vérification : étude du 24/09/2026 sauf mention « estimation ».
+   fixedCurrency : devise du frais fixe par vente ('EUR' | 'USD').
+   caBasis : base de chiffre d'affaires déclaré à l'URSSAF (lecture dominante, à confirmer) :
+     'gross'  = prix payé par le client (plateforme intermédiaire, tu es le vendeur) ;
+     'payout' = montant reversé (la plateforme est vendeur officiel / Merchant of Record). */
+
+window.RESTE_NET_RATES = {
+  version: '2026-10-02',
+  verifiedOn: '24/09/2026',
+  usdToEur: 0.90,
+
+  platforms: [
+    {
+      id: 'gumroad', name: 'Gumroad', group: 'Produits numériques',
+      pct: 10, fixed: 0.50, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, minimum: 10, minimumCurrency: 'USD', label: 'Virement direct gratuit (seuil 10 $ après vérification d\'identité)' },
+      options: [{ id: 'discover', label: 'Vente via Gumroad Discover (30 %)', pctOverride: 30 }],
+      note: 'Gumroad est vendeur officiel (MoR) : il ajoute la TVA au prix et te reverse le montant hors frais.',
+      verified: true,
+    },
+    {
+      id: 'polar', name: 'Polar.sh', group: 'Produits numériques',
+      pct: 5, fixed: 0.50, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0.25, fixedCurrency: 'USD', pct: 0.25, monthly: 2, monthlyCurrency: 'USD', label: 'Stripe Connect Express : 0,25 % + 0,25 $ par payout, ~2 $/mois par payout actif' },
+      options: [{ id: 'pro', label: 'Plan Pro (3,8 % + 0,40 $, 20 $/mois)', pctOverride: 3.8, fixedOverride: 0.40, monthlySub: 20, monthlySubCurrency: 'USD' }],
+      note: 'Merchant of Record : TVA gérée par Polar. Particulier accepté en France.',
+      verified: true,
+    },
+    {
+      id: 'stripe', name: 'Stripe France (compte classique)', group: 'Vente directe',
+      pct: 1.5, fixed: 0.25, fixedCurrency: 'EUR',
+      caBasis: 'gross',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, label: 'Virement gratuit' },
+      options: [],
+      note: 'Cartes européennes. SIRET obligatoire : réservé aux micro-entrepreneurs immatriculés.',
+      verified: true,
+    },
+    {
+      id: 'comeup', name: 'ComeUp', group: 'Services freelance',
+      pct: 0, fixed: 1.20, fixedCurrency: 'EUR',
+      caBasis: 'gross',
+      withdrawal: { fixed: 0.50, fixedCurrency: 'EUR', pct: 0, minimum: 1, minimumCurrency: 'EUR', label: 'Hyperwallet : 0,50 € vers IBAN, 0 € vers carte bancaire, dès 1 €' },
+      options: [{ id: 'card', label: 'Retrait vers carte bancaire (gratuit)', withdrawalFixedOverride: 0, default: true }],
+      note: 'Commission vendeur 1 € HT (1,20 € TTC) par commande. L\'acheteur paie en plus 5 % + 0,30 €.',
+      verified: true,
+    },
+    {
+      id: 'fiverr', name: 'Fiverr', group: 'Services freelance',
+      pct: 20, fixed: 0, fixedCurrency: 'USD',
+      caBasis: 'gross',
+      withdrawal: { fixed: 3, fixedCurrency: 'USD', pct: 2, label: 'Payoneer : 3 $ par retrait + change ≈ 2 % (estimation)' },
+      options: [],
+      note: 'Argent bloqué 14 jours après chaque commande. Frais de change estimés, non vérifiés.',
+      verified: true, estimated: ['change'],
+    },
+    {
+      id: 'itch', name: 'itch.io (collecté par itch.io)', group: 'Jeux et outils',
+      pct: 13, fixed: 0.30, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 1.50, fixedCurrency: 'USD', pct: 2, minimum: 5, minimumCurrency: 'USD', label: 'Payoneer : minimum 5 $, 1,50 $ par retrait + change ≈ 2 % (estimation)' },
+      options: [],
+      note: 'Part itch.io 10 % par défaut (réglable sur ta page) + traitement du paiement ≈ 3 % + 0,30 $ (estimation). Paiement 7 à 14 jours après demande.',
+      verified: true, estimated: ['traitement du paiement', 'change'],
+    },
+    {
+      id: 'msstore', name: 'Microsoft Store', group: 'Stores',
+      pct: 15, fixed: 0, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, minimum: 50, minimumCurrency: 'USD', label: 'SEPA gratuit, seuil 50 $' },
+      options: [{ id: 'game', label: 'Jeu (12 %)', pctOverride: 12 }],
+      note: 'Compte développeur individuel gratuit depuis septembre 2025.',
+      verified: true,
+    },
+    {
+      id: 'gplay', name: 'Google Play', group: 'Stores',
+      pct: 15, fixed: 0, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, minimum: 1, minimumCurrency: 'USD', label: 'Virement en euros gratuit, seuil 1 $, vers le 15 du mois suivant' },
+      options: [{ id: 'eea', label: 'Barème EEE nouvelles installations (10 %, n.v.)', pctOverride: 10 }],
+      note: 'Compte développeur 25 $ une fois. Google est vendeur officiel dans l\'UE.',
+      verified: true,
+    },
+    {
+      id: 'steam', name: 'Steam', group: 'Stores',
+      pct: 30, fixed: 0, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, minimum: 100, minimumCurrency: 'USD', label: 'Virement, seuil 100 $' },
+      options: [],
+      note: '100 $ par jeu à l\'inscription (remboursés après 1 000 $ de ventes). Non vérifié dans l\'étude.',
+      verified: false,
+    },
+    {
+      id: 'apple', name: 'Apple App Store', group: 'Stores',
+      pct: 15, fixed: 0, fixedCurrency: 'USD',
+      caBasis: 'payout',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, minimum: 10, minimumCurrency: 'USD', label: 'Virement, seuil 10 $' },
+      options: [{ id: 'std', label: 'Barème standard (30 %)', pctOverride: 30 }],
+      note: '99 $ par an. 15 % avec le Small Business Program. Non vérifié dans l\'étude.',
+      verified: false,
+    },
+    {
+      id: 'direct', name: 'Entre particuliers (virement, Wero, Lydia)', group: 'Vente directe',
+      pct: 0, fixed: 0, fixedCurrency: 'EUR',
+      caBasis: 'gross',
+      withdrawal: { fixed: 0, fixedCurrency: 'EUR', pct: 0, label: 'Aucun frais' },
+      options: [],
+      note: '1 € payé = 1 € reçu. Revenu à déclarer quand même.',
+      verified: true,
+    },
+  ],
+
+  statuses: [
+    {
+      id: 'particulier', name: 'Particulier occasionnel (non immatriculé)',
+      social: 0, socialAcre: 0, cfp: 0, tfc: 0,
+      prelevementsSociaux: 17.2, abattement: 34, abattementMin: 305, versementLiberatoire: null,
+      note: 'Revenus BNC non professionnels (2042 C PRO). Abattement de 34 % avec un minimum de 305 € : en dessous de 305 € de recettes dans l\'année, base imposable nulle, mais la déclaration reste due. Une activité habituelle impose l\'immatriculation.',
+    },
+    {
+      id: 'bnc', name: 'Micro-entreprise BNC (libéral : dev, conseil, rédaction, design)',
+      social: 26.1, socialAcre: 13.05, cfp: 0.2, tfc: 0,
+      prelevementsSociaux: 0, abattement: 34, abattementMin: 305, versementLiberatoire: 2.2,
+      note: 'Taux URSSAF au 01/01/2026 (26,1 %). ACRE : moitié la première année.',
+    },
+    {
+      id: 'bic-services', name: 'Micro-entreprise BIC prestations de services (artisan, commerçant)',
+      social: 21.2, socialAcre: 10.6, cfp: 0.3, tfc: 0.48,
+      prelevementsSociaux: 0, abattement: 50, abattementMin: 305, versementLiberatoire: 1.7,
+      note: 'CFP 0,3 % et TFC 0,48 % pour un artisan (commerçant : 0,1 % et 0,044 %).',
+    },
+    {
+      id: 'bic-vente', name: 'Micro-entreprise BIC vente de marchandises',
+      social: 12.3, socialAcre: 6.2, cfp: 0.1, tfc: 0.015,
+      prelevementsSociaux: 0, abattement: 71, abattementMin: 305, versementLiberatoire: 1.0,
+      note: 'TFC 0,015 % pour un commerçant (artisan : 0,22 %).',
+    },
+  ],
+
+  tmiChoices: [0, 11, 30, 41, 45],
+};
+
+/* Identifiants de licence : à renseigner après création des produits (voir PUBLICATION.md). */
+window.LICENSE_CONFIG = {
+  polarOrganizationId: '',
+  gumroadProductId: '',
+  buyUrlGumroad: 'https://bartholoneo.gumroad.com/l/reste-net',
+  buyUrlPolar: 'https://polar.sh/bartholoneo/products/reste-net',
+  siteUrl: 'https://bartholoneo.github.io/reste-net/',
+};
