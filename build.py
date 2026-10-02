@@ -32,6 +32,10 @@ def single_file(edition: str) -> str:
     """Inline CSS, JS et icône dans un seul HTML autonome."""
     html = read('index.html')
     css = read('styles.css')
+    # polices embarquées : le fichier unique doit marcher hors ligne
+    for font in ('caveat.woff2', 'patrick-hand.woff2'):
+        b64 = base64.b64encode((APP / 'fonts' / font).read_bytes()).decode()
+        css = css.replace(f'url(fonts/{font})', f'url(data:font/woff2;base64,{b64})')
     js = '\n'.join(read(n) for n in ('rates.js', 'calc.js', 'app.js'))
     assert '</script>' not in js, 'un </script> dans le JS casserait le fichier unique'
     icon_b64 = base64.b64encode((APP / 'icons' / 'icon-192.png').read_bytes()).decode()

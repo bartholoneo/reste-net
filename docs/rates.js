@@ -6,7 +6,7 @@
      'payout' = montant reversé (la plateforme est vendeur officiel / Merchant of Record). */
 
 window.RESTE_NET_RATES = {
-  version: '2026-10-02b',
+  version: '2026-10-02c',
   verifiedOn: '24/09/2026',
   usdToEur: 0.90,
 
