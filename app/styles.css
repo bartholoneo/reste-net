@@ -16,6 +16,7 @@
   --accent: #2dd4bf; --accent-ink: #062b27; --accent-soft: #11332f; --best: #2b2816; --best-line: #8a7a2a; --shadow: none;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { color-scheme: light dark; }
 body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.45; -webkit-text-size-adjust: 100%; }
 a { color: var(--accent); }
@@ -69,8 +70,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .platforms legend { color: var(--muted); font-size: .9rem; padding: 0; margin-bottom: .5rem; }
 .chips { display: grid; gap: .6rem; }
 .chip-group { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
-.chip-group-label { font-size: .78rem; color: var(--muted); min-width: 8.5rem; }
-.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .7rem; border: 1px solid var(--line); border-radius: 999px; font-size: .88rem; cursor: pointer; background: var(--bg); }
+.chip-group-label { font-size: .8rem; color: var(--muted); min-width: 8.5rem; }
+.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border: 1px solid var(--line); border-radius: 999px; font-size: .88rem; cursor: pointer; background: var(--bg); }
 .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chip small { color: var(--muted); font-weight: 400; }
@@ -88,7 +89,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .result > summary > span { display: flex; flex-direction: column; }
 .result > summary > span.r-name { flex-direction: row; align-items: center; gap: .4rem; font-weight: 600; }
 .result > summary > span.r-net b, .result > summary > span.r-month b { font-size: 1.15rem; }
-.result > summary small { color: var(--muted); font-size: .76rem; }
+.result > summary small { color: var(--muted); font-size: .8rem; }
 .star { color: #c99700; }
 .r-body { padding: 0 .95rem .9rem; display: grid; gap: .6rem; }
 .lines { width: 100%; border-collapse: collapse; font-size: .9rem; }
@@ -117,7 +118,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .s-field > span:first-child { color: var(--muted); }
 .s-field input { padding: .35rem .5rem; }
 
-footer { max-width: 1040px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .8rem; }
+footer { max-width: 1040px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .82rem; }
 footer p { margin: .5rem 0; }
 
 dialog { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); padding: 22px; max-width: 460px; width: calc(100% - 32px); }
@@ -126,8 +127,9 @@ dialog h2 { margin-bottom: .4rem; }
 dialog form { display: grid; gap: .8rem; }
 
 @media (max-width: 640px) {
-  .result > summary { grid-template-columns: 1fr 1fr; }
+  .result > summary { grid-template-columns: 1fr; gap: .4rem; }
   .result > summary > span.r-name { grid-column: 1 / -1; }
+  .result > summary > span.r-net, .result > summary > span.r-month { flex-direction: row; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
   .result > summary::after { display: none; }
   .chip-group-label { min-width: 100%; }
   .s-field { grid-template-columns: 1fr; }

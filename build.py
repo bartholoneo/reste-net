@@ -48,10 +48,19 @@ def single_file(edition: str) -> str:
     return html
 
 
+def clear_dir(folder: Path) -> None:
+    """Vide le dossier sans le supprimer (un serveur local peut l'avoir comme répertoire courant)."""
+    folder.mkdir(exist_ok=True)
+    for child in folder.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
 def build_site() -> None:
-    if DOCS.exists():
-        shutil.rmtree(DOCS)
-    shutil.copytree(APP, DOCS, ignore=shutil.ignore_patterns('__pycache__'))
+    clear_dir(DOCS)
+    shutil.copytree(APP, DOCS, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__'))
     ver = version()
     (DOCS / 'sw.js').write_text(read('sw.js').replace('__VERSION__', ver), encoding='utf-8')
     manifest = read('manifest.webmanifest')
