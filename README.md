@@ -30,3 +30,5 @@ Un taux a changé ? Modifie `app/rates.js`, incrémente `version`, relance `buil
 ## Licence
 
 Code source visible pour vérifier les calculs. Tous droits réservés, © 2026 Bartholoneo. Contact : bartholoneo@gmail.com
+
+Polices : [Caveat](https://fonts.google.com/specimen/Caveat) et [Patrick Hand](https://fonts.google.com/specimen/Patrick+Hand), licence SIL Open Font License 1.1 (textes dans `app/fonts/`).

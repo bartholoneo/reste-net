@@ -16,15 +16,61 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent
 ICONS = ROOT / 'app' / 'icons'
 VIS = ROOT / 'visuels'
-TEAL = (15, 118, 110)
-TEAL_DARK = (9, 78, 73)
-INK = (22, 32, 42)
-PAPER = (244, 246, 245)
-GOLD = (201, 151, 0)
+# Palette « papier crayon » (alignée sur styles.css)
+PAPER = (244, 238, 225)
+CARD = (251, 247, 238)
+INK = (43, 43, 48)
+PENCIL = (95, 92, 87)
+LINE = (154, 149, 139)
+MARKER = (255, 231, 106)
+RED = (192, 57, 43)
+BLUE = (47, 95, 143)
 # Ordonnée (px) du haut de chaque recadrage dans les rendus pleine page ; à ajuster si la mise en page change.
-CROPS = {'comparateur': 860, 'inverse': 1700, 'gratuite': 430}
-FONT_BOLD = 'C:/Windows/Fonts/segoeuib.ttf'
-FONT_REG = 'C:/Windows/Fonts/segoeui.ttf'
+CROPS = {'comparateur': 935, 'inverse': 1780, 'gratuite': 470}
+FONT_BOLD = str(ROOT / 'visuels' / 'fonts' / 'Caveat-Variable.ttf')
+FONT_REG = str(ROOT / 'visuels' / 'fonts' / 'PatrickHand-Regular.ttf')
+
+
+def font_title(size: int) -> ImageFont.FreeTypeFont:
+    """Caveat en graisse 700 (police variable)."""
+    f = font(FONT_BOLD, size)
+    try:
+        f.set_variation_by_axes([700])
+    except Exception:
+        pass
+    return f
+
+
+def wobbly_rect(d: ImageDraw.ImageDraw, box, fill=None, outline=INK, width=4, seed=1) -> None:
+    """Rectangle « dessiné à la main » : contour légèrement irrégulier, double trait."""
+    import random
+    rnd = random.Random(seed)
+    x0, y0, x1, y1 = box
+    def pts(jit):
+        n = 14
+        out = []
+        for i in range(n + 1):
+            out.append((x0 + (x1 - x0) * i / n, y0 + rnd.uniform(-jit, jit)))
+        for i in range(1, n + 1):
+            out.append((x1 + rnd.uniform(-jit, jit), y0 + (y1 - y0) * i / n))
+        for i in range(1, n + 1):
+            out.append((x1 - (x1 - x0) * i / n, y1 + rnd.uniform(-jit, jit)))
+        for i in range(1, n):
+            out.append((x0 + rnd.uniform(-jit, jit), y1 - (y1 - y0) * i / n))
+        return out
+    if fill:
+        d.polygon(pts(1.5), fill=fill)
+    d.line(pts(2.5) + [pts(2.5)[0]], fill=outline, width=width, joint='curve')
+    d.line(pts(3.5) + [pts(3.5)[0]], fill=outline + (90,) if len(outline) == 3 else outline, width=max(1, width // 2), joint='curve')
+
+
+def grain(img: Image.Image, strength: int = 10) -> Image.Image:
+    """Grain de papier : léger bruit gris mélangé à l'image (alpha conservé)."""
+    noise = Image.effect_noise(img.size, strength).convert('L')
+    layer = Image.merge(img.mode, [noise] * len(img.getbands()))
+    if img.mode == 'RGBA':
+        layer.putalpha(img.getchannel('A'))
+    return Image.blend(img, layer, 0.06)
 
 
 def font(path: str, size: int) -> ImageFont.FreeTypeFont:
@@ -35,25 +81,31 @@ def font(path: str, size: int) -> ImageFont.FreeTypeFont:
 
 
 def draw_icon(size: int, maskable: bool = False) -> Image.Image:
-    """Carré arrondi teal, grand « € » blanc dont le bas est coupé par une barre dorée : « ce qui reste »."""
-    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    pad = 0 if maskable else int(size * 0.04)
-    radius = int(size * (0 if maskable else 0.22))
-    d.rounded_rectangle([pad, pad, size - pad, size - pad], radius=radius, fill=TEAL)
-    s = size
-    f = font(FONT_BOLD, int(s * 0.66))
+    """Feuille de papier, grand « € » au crayon graphite, trait de surligneur jaune dessous."""
+    big = 1024
+    img = Image.new('RGBA', (big, big), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img, 'RGBA')
+    pad = 0 if maskable else int(big * 0.05)
+    radius = int(big * (0 if maskable else 0.16))
+    d.rounded_rectangle([pad, pad, big - pad, big - pad], radius=radius, fill=PAPER + (255,))
+    if not maskable:
+        wobbly_rect(d, [pad + 78, pad + 78, big - pad - 78, big - pad - 78], outline=INK, width=10, seed=7)
+    # surligneur sous le symbole
+    hl = Image.new('RGBA', (big, big), (0, 0, 0, 0))
+    hd = ImageDraw.Draw(hl)
+    hd.rounded_rectangle([int(big * 0.2), int(big * 0.66), int(big * 0.8), int(big * 0.76)], radius=40, fill=MARKER + (230,))
+    hl = hl.rotate(-3, resample=Image.BICUBIC, center=(big / 2, big * 0.71))
+    img.alpha_composite(hl)
+    f = font_title(int(big * 0.78))
     text = '€'
     bbox = d.textbbox((0, 0), text, font=f)
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    x = (s - w) / 2 - bbox[0]
-    y = (s - h) / 2 - bbox[1] - s * 0.04
-    d.text((x, y), text, font=f, fill=(255, 255, 255))
-    # barre dorée « net » en bas, légèrement inclinée
-    bar_h = int(s * 0.075)
-    y0 = int(s * 0.76)
-    d.rounded_rectangle([int(s * 0.2), y0, int(s * 0.8), y0 + bar_h], radius=bar_h // 2, fill=GOLD)
-    return img
+    x = (big - w) / 2 - bbox[0]
+    y = (big - h) / 2 - bbox[1] - big * 0.05
+    d.text((x + 6, y + 6), text, font=f, fill=INK + (60,))   # ombre crayon
+    d.text((x, y), text, font=f, fill=INK + (255,))
+    img = grain(img, 12)
+    return img.resize((size, size), Image.LANCZOS)
 
 
 def make_icons() -> None:
@@ -84,45 +136,55 @@ def engine_nets(price: float, platforms: list) -> list:
 def make_cover() -> None:
     VIS.mkdir(exist_ok=True)
     W, H = 1280, 720
-    img = Image.new('RGB', (W, H), PAPER)
-    d = ImageDraw.Draw(img)
-    # bande teal à gauche
-    d.rectangle([0, 0, 470, H], fill=TEAL)
-    d.rectangle([0, H - 60, 470, H], fill=TEAL_DARK)
-    icon = draw_icon(200)
-    img.paste(icon, (135, 110), icon)
-    d.text((235, 340), 'Reste Net', font=font(FONT_BOLD, 54), fill=(255, 255, 255), anchor='mm')
-    d.text((235, 400), 'Combien il me reste vraiment ?', font=font(FONT_REG, 26), fill=(224, 242, 239), anchor='mm')
-    d.text((235, H - 30), '3 € · fichier hors ligne + web · Windows', font=font(FONT_REG, 20), fill=(255, 255, 255), anchor='mm')
-    # côté droit : mini tableau
+    img = Image.new('RGBA', (W, H), PAPER + (255,))
+    d = ImageDraw.Draw(img, 'RGBA')
+    # feuille de gauche : cadre au crayon, icône, titre
+    wobbly_rect(d, [40, 40, 450, H - 40], fill=CARD + (255,), outline=INK, width=4, seed=11)
+    icon = draw_icon(190)
+    img.alpha_composite(icon, (150, 95))
+    d.text((245, 350), 'Reste Net', font=font_title(84), fill=INK, anchor='mm')
+    # soulignement au surligneur
+    d.rounded_rectangle([120, 392, 370, 404], radius=6, fill=MARKER + (230,))
+    d.text((245, 440), 'Combien il me reste vraiment ?', font=font(FONT_REG, 32), fill=PENCIL, anchor='mm')
+    d.text((245, H - 85), '3 € · fichier hors ligne + web · Windows', font=font(FONT_REG, 24), fill=PENCIL, anchor='mm')
+    # côté droit : relevé au crayon
     x0 = 520
-    d.text((x0, 70), 'Ce que tu touches vraiment sur une vente à 5 €', font=font(FONT_BOLD, 30), fill=INK)
-    d.text((x0, 115), 'Frais de plateforme, retraits, cotisations URSSAF 2026, impôt.', font=font(FONT_REG, 22), fill=(91, 103, 112))
+    d.text((x0, 60), 'Ce que tu touches vraiment sur une vente à 5 €', font=font_title(42), fill=INK)
+    d.text((x0, 125), 'Frais de plateforme, retraits, cotisations URSSAF 2026, impôt.', font=font(FONT_REG, 26), fill=PENCIL)
     rows = engine_nets(5.0, [('direct', 'Entre particuliers'), ('polar', 'Polar.sh'), ('gumroad', 'Gumroad'), ('comeup', 'ComeUp'),
                              ('msstore', 'Microsoft Store'), ('fiverr', 'Fiverr'), ('itch', 'itch.io')])
-    y = 175
-    fb, fr = font(FONT_BOLD, 24), font(FONT_REG, 24)
+    y = 185
+    fb, fr = font_title(38), font(FONT_REG, 27)
     for i, (name, net, ratio) in enumerate(rows):
         d.text((x0, y), name, font=fr, fill=INK)
-        bar_w = int(420 * ratio)
-        d.rounded_rectangle([x0 + 230, y + 6, x0 + 230 + bar_w, y + 26], radius=10, fill=TEAL if i else GOLD)
-        d.text((x0 + 230 + 420 + 16, y), net, font=fb, fill=INK)
-        y += 52
-    d.text((x0, 560), 'Puis ton statut : particulier occasionnel, micro-BNC, micro-BIC…', font=font(FONT_REG, 22), fill=(91, 103, 112))
-    d.text((x0, 595), 'Calcul inverse · simulation mensuelle · export CSV · scénarios', font=font(FONT_REG, 22), fill=(91, 103, 112))
-    d.text((x0, 650), 'Taux vérifiés, tous modifiables. Aucune donnée envoyée.', font=font(FONT_BOLD, 22), fill=TEAL)
-    img.save(VIS / 'couverture-1280x720.png')
+        bar_w = int(400 * ratio)
+        # barre au surligneur (la meilleure) ou hachures au crayon
+        if i == 0:
+            d.rounded_rectangle([x0 + 240, y + 8, x0 + 240 + bar_w, y + 30], radius=4, fill=MARKER + (235,))
+        else:
+            d.rounded_rectangle([x0 + 240, y + 8, x0 + 240 + bar_w, y + 30], radius=4, outline=INK + (255,), width=2)
+            for hx in range(x0 + 244, x0 + 240 + bar_w - 4, 9):
+                d.line([(hx, y + 28), (hx + 8, y + 10)], fill=PENCIL + (170,), width=2)
+        d.text((x0 + 240 + 400 + 18, y - 6), net, font=fb, fill=INK)
+        d.line([(x0, y + 44), (x0 + 700, y + 44)], fill=LINE + (120,), width=1)
+        y += 53
+    d.text((x0, 565), 'Puis ton statut : particulier occasionnel, micro-BNC, micro-BIC…', font=font(FONT_REG, 25), fill=PENCIL)
+    d.text((x0, 600), 'Calcul inverse · simulation mensuelle · export CSV · scénarios', font=font(FONT_REG, 25), fill=PENCIL)
+    d.text((x0, 648), 'Taux vérifiés, tous modifiables. Aucune donnée envoyée.', font=font_title(36), fill=BLUE)
+    grain(img, 10).convert('RGB').save(VIS / 'couverture-1280x720.png')
 
     # vignette carrée
     S = 600
-    sq = Image.new('RGB', (S, S), TEAL)
-    dd = ImageDraw.Draw(sq)
-    ic = draw_icon(260)
-    sq.paste(ic, (170, 90), ic)
-    dd.text((300, 410), 'Reste Net', font=font(FONT_BOLD, 60), fill=(255, 255, 255), anchor='mm')
-    dd.text((300, 475), 'Combien il me reste vraiment ?', font=font(FONT_REG, 28), fill=(224, 242, 239), anchor='mm')
-    dd.text((300, 540), 'Calculateur de net · 3 €', font=font(FONT_REG, 24), fill=(255, 255, 255), anchor='mm')
-    sq.save(VIS / 'vignette-600x600.png')
+    sq = Image.new('RGBA', (S, S), PAPER + (255,))
+    dd = ImageDraw.Draw(sq, 'RGBA')
+    wobbly_rect(dd, [28, 28, S - 28, S - 28], fill=CARD + (255,), outline=INK, width=4, seed=5)
+    ic = draw_icon(250)
+    sq.alpha_composite(ic, (175, 75))
+    dd.text((300, 400), 'Reste Net', font=font_title(88), fill=INK, anchor='mm')
+    dd.rounded_rectangle([175, 442, 425, 454], radius=6, fill=MARKER + (230,))
+    dd.text((300, 490), 'Combien il me reste vraiment ?', font=font(FONT_REG, 30), fill=PENCIL, anchor='mm')
+    dd.text((300, 540), 'Calculateur de net · 3 €', font=font(FONT_REG, 26), fill=INK, anchor='mm')
+    grain(sq, 10).convert('RGB').save(VIS / 'vignette-600x600.png')
     draw_icon(300).convert('RGB').save(VIS / 'store-logo-300x300.png')
     print('couverture, vignette, logo store écrits dans', VIS)
 

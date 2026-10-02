@@ -1,6 +1,6 @@
 /* Reste Net — service worker : cache-first, mise à jour en arrière-plan. La version est remplacée par build.py. */
-const CACHE = 'reste-net-2026-10-02b';
-const ASSETS = ['./', './index.html', './store.html', './styles.css', './rates.js', './calc.js', './app.js', './manifest.webmanifest', './manifest-store.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
+const CACHE = 'reste-net-2026-10-02c';
+const ASSETS = ['./', './index.html', './store.html', './styles.css', './rates.js', './calc.js', './app.js', './manifest.webmanifest', './manifest-store.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './fonts/caveat.woff2', './fonts/patrick-hand.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
