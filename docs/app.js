@@ -105,7 +105,7 @@
     const r = rates();
     const html = r.platforms.filter((p) => state.selected.includes(p.id) && (p.options || []).length).map((p) => `
       <div class="option-row"><strong>${esc(p.name)}</strong> ${p.options.map((o) => `
-        <label><input type="checkbox" data-platform="${p.id}" data-option="${o.id}" ${state.options[p.id][o.id] ? 'checked' : ''}> ${esc(o.label)}</label>`).join('')}</div>`).join('');
+        <label><input type="checkbox" name="opt-${p.id}-${o.id}" data-platform="${p.id}" data-option="${o.id}" ${state.options[p.id][o.id] ? 'checked' : ''}> ${esc(o.label)}</label>`).join('')}</div>`).join('');
     $('platformOptions').innerHTML = html;
     $('platformOptions').querySelectorAll('input').forEach((inp) => inp.addEventListener('change', () => {
       state.options[inp.dataset.platform][inp.dataset.option] = inp.checked; renderAll();
@@ -175,6 +175,7 @@
       if (p.withdrawal.minimum && C.toEur(p.withdrawal.minimum, p.withdrawal.minimumCurrency, r.usdToEur) > (monthly ? m.received : s.received) && (monthly ? m.received : s.received) > 0) {
         warn.push(`Seuil de retrait ${p.withdrawal.minimum} ${p.withdrawal.minimumCurrency === 'USD' ? '$' : '€'} : l'argent attend d'atteindre le seuil.`);
       }
+      if (s.price > 0 && s.net <= 0) warn.push('Prix trop bas pour cette plateforme : les frais dépassent ce que tu toucherais.');
       if (!p.verified) warn.push('Taux non vérifiés dans l\'étude.');
       if (p.estimated) warn.push('Estimation pour : ' + p.estimated.join(', ') + '.');
       return `<details class="result${best ? ' best' : ''}" ${results.length === 1 ? 'open' : ''}>
@@ -185,8 +186,9 @@
           <p class="hint">${esc(p.note)} Retrait : ${esc(p.withdrawal.label)}.${warn.length ? ' <span class="warn">' + esc(warn.join(' ')) + '</span>' : ''}</p>
         </div></details>`;
     }).join('');
+    const annual = state.price * Math.max(1, state.nSales) * 12;
     $('resultsHint').innerHTML = full
-      ? 'Impôt et prélèvements : estimés à ce rythme de ventes sur douze mois (abattement minimum de 305 € appliqué). Sur le mois : les frais fixes de retrait et les abonnements s\'ajoutent.'
+      ? `À ce rythme (${state.nSales} vente${state.nSales > 1 ? 's' : ''} par mois), tu encaisses ${eur(annual)} par an : l'impôt et les prélèvements sont estimés sur cette base, avec l'abattement minimum de 305 €. Sur le mois : les frais fixes de retrait et les abonnements s'ajoutent.`
       : `Hors frais fixes de retrait, cotisations et impôt. La <a href="${esc(buyUrl())}" target="_blank" rel="noopener">version complète</a> compare toutes les plateformes et ajoute ton statut.`;
   }
 
@@ -238,7 +240,7 @@
   function renderSettings() {
     const r = rates();
     $('usdToEur').value = r.usdToEur; $('forceGross').checked = r.forceGross;
-    const numField = (label, path, value, step, unit) => `<label class="s-field"><span>${label}</span><span class="input-unit"><input type="number" step="${step}" min="0" data-path="${path}" value="${value}"><em>${unit}</em></span></label>`;
+    const numField = (label, path, value, step, unit) => `<label class="s-field"><span>${label}</span><span class="input-unit"><input type="number" step="${step}" min="0" name="${path}" data-path="${path}" value="${value}"><em>${unit}</em></span></label>`;
     $('platformSettings').innerHTML = r.platforms.map((p) => `<div class="s-block"><h4>${esc(p.name)}</h4>
       ${numField('Commission', `platforms.${p.id}.pct`, p.pct, '0.1', '%')}
       ${numField('Fixe par vente', `platforms.${p.id}.fixed`, p.fixed, '0.01', p.fixedCurrency === 'USD' ? '$' : '€')}
