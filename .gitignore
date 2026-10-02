@@ -1,0 +1,10 @@
+# Livrable payant : construit localement, jamais publié ici
+dist/
+
+# Rendus intermédiaires des captures
+visuels/_*.png
+
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
