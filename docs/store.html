@@ -47,11 +47,17 @@
           <span class="input-unit"><input id="nWithdraw" type="number" inputmode="numeric" min="0" step="1" value="1"><em>retraits</em></span>
         </label>
       </div>
-      <fieldset class="platforms">
-        <legend id="platformsLegend">Plateforme</legend>
-        <div id="platformChips" class="chips"></div>
-        <div id="platformOptions" class="options"></div>
-      </fieldset>
+      <div class="sep">
+        <fieldset class="platforms">
+          <legend id="platformsLegend" class="subhead">Plateforme</legend>
+          <div id="platformChips" class="chips"></div>
+        </fieldset>
+        <div id="platformOptionsWrap" class="options-wrap" hidden>
+          <h3 class="subhead">Cas particuliers</h3>
+          <p class="hint one">Coche seulement si c'est ta situation : le frais indiqué remplace alors le taux normal de la plateforme.</p>
+          <div id="platformOptions" class="options"></div>
+        </div>
+      </div>
     </section>
 
     <section class="card lockable" id="statusCard" data-lock-title="Statut et cotisations" data-lock-text="Particulier occasionnel ou micro-entreprise, cotisations URSSAF 2026, ACRE, versement libératoire, impôt : dans la version complète.">
@@ -71,21 +77,27 @@
           <label><input type="checkbox" id="includeTax" checked> Inclure l'impôt sur le revenu</label>
         </div>
       </div>
-      <div class="grid3 tmi-help">
-        <label class="field">
-          <span>Pour trouver ma tranche : revenu imposable annuel par part (facultatif)</span>
-          <span class="input-unit"><input id="otherIncome" type="number" inputmode="numeric" min="0" step="100" placeholder="ex. 24 000"><em>€</em></span>
-        </label>
-        <p class="hint" id="tmiHint"></p>
+      <div id="statusNote"></div>
+      <div class="sep tmi-help">
+        <h3 class="subhead">Je ne connais pas ma tranche</h3>
+        <div class="grid3">
+          <label class="field">
+            <span>Revenu imposable annuel par part, sur mon avis d'imposition (facultatif)</span>
+            <span class="input-unit"><input id="otherIncome" type="number" inputmode="numeric" min="0" step="100" placeholder="ex. 24 000"><em>€</em></span>
+          </label>
+          <div class="field end">
+            <p class="hint one">Saisis-le : la tranche se choisit toute seule.</p>
+            <div id="tmiHint"></div>
+          </div>
+        </div>
       </div>
-      <p class="hint" id="statusNote"></p>
     </section>
 
     <section class="card" id="resultsCard">
       <h2><span class="num">3</span> Ce qu'il me reste</h2>
       <div id="chart" class="chart full-only"></div>
       <div id="results" aria-live="polite"></div>
-      <p class="hint" id="resultsHint"></p>
+      <div id="resultsHint"></div>
       <div class="toolbar share">
         <button type="button" id="copyLinkBtn" class="btn-ghost">Copier le lien de ce calcul</button>
         <button type="button" id="copyTextBtn" class="btn-ghost">Copier le résumé</button>
@@ -96,12 +108,13 @@
 
     <section class="card lockable" id="cashCard" data-lock-compact="1" data-lock-title="Qui te paie en premier ?" data-lock-text="Seuils de versement, délais de validation, rythme des virements : le premier euro arrive après 0 jour chez l'un, 1 an chez l'autre. Dans la version complète.">
       <h2><span class="num">4</span> Qui te paie en premier ?</h2>
-      <p class="hint">À ce rythme de ventes, première vente aujourd'hui : quand le premier argent arrive-t-il vraiment sur ton compte ? Seuils de versement et délais moyens de chaque plateforme.</p>
+      <p class="hint one">Chaque plateforme a un seuil et un délai : voici quand le premier argent arrive sur ton compte, à ce rythme.</p>
       <div id="cashResults"></div>
     </section>
 
     <section class="card lockable" id="goalCard" data-lock-compact="1" data-lock-title="Objectif et point mort" data-lock-text="« Je veux 100 € net par mois » : combien de ventes sur chaque plateforme, et combien pour couvrir mes frais fixes ? Dans la version complète.">
       <h2><span class="num">5</span> Objectif et point mort</h2>
+      <p class="hint one">Combien de ventes par mois il te faut pour ton objectif de net, et pour seulement couvrir tes frais fixes.</p>
       <div class="grid3">
         <label class="field">
           <span>Je veux, par mois, un net de</span>
@@ -127,11 +140,13 @@
 
     <section class="card lockable" id="milestoneCard" data-lock-compact="1" data-lock-title="Jalons à ce rythme" data-lock-text="305 € d'abattement, DAC7, CFE, franchise de TVA, plafond micro : quels seuils tu franchis et quand. Dans la version complète.">
       <h2><span class="num">7</span> Jalons à ce rythme</h2>
+      <p class="hint one">Les seuils administratifs (impôt, immatriculation, TVA) que tu franchis à ce rythme de ventes, et quand.</p>
       <ul id="milestones" class="milestones"></ul>
     </section>
 
     <section class="card lockable" id="inverseCard" data-lock-compact="1" data-lock-title="Calcul inverse" data-lock-text="« Je veux toucher 10 € net : quel prix afficher sur chaque plateforme ? » Dans la version complète.">
       <h2><span class="num">8</span> Calcul inverse</h2>
+      <p class="hint one">Tu pars du net que tu veux toucher : voici le prix à afficher sur chaque plateforme.</p>
       <label class="field inline">
         <span>Je veux toucher, par vente, un net de</span>
         <span class="input-unit"><input id="targetNet" type="number" inputmode="decimal" min="0" step="0.01" value="10"><em>€</em></span>
@@ -174,8 +189,11 @@
   </main>
 
   <footer>
-    <p><strong>Outil indicatif.</strong> Reste Net n'est ni un conseil fiscal ni un conseil comptable. Les taux de plateformes ont été vérifiés le <span id="verifiedOn"></span> ; les taux de cotisations sont ceux publiés par l'URSSAF pour 2026 ; les éléments marqués « estimation » ou « n.v. » ne sont pas vérifiés. Les plateformes changent leurs tarifs : vérifie avant de fixer un prix. La base de chiffre d'affaires à déclarer (prix client ou montant reversé) suit la lecture dominante et reste à confirmer avec l'URSSAF.</p>
-    <p>Aucune donnée ne quitte ton appareil : tout est calculé dans ton navigateur et les scénarios sont stockés localement. Fait par <a href="https://github.com/bartholoneo" target="_blank" rel="noopener">Bartholoneo</a> · <a id="footerBuy" href="#" target="_blank" rel="noopener">Version complète 3 €</a> · <a href="confidentialite.html">Confidentialité</a> · <span id="versionLabel"></span></p>
+    <p><strong>Outil indicatif</strong>, ni conseil fiscal ni conseil comptable. Taux de plateformes vérifiés le <span id="verifiedOn"></span>.</p>
+    <details class="more"><summary>Limites et précautions</summary><div class="more-body">
+      <p>Les taux de cotisations sont ceux publiés par l'URSSAF pour 2026 ; les éléments marqués « estimation » ou « n.v. » ne sont pas vérifiés. Les plateformes changent leurs tarifs : vérifie avant de fixer un prix. La base de chiffre d'affaires à déclarer (prix client ou montant reversé) suit la lecture dominante et reste à confirmer avec l'URSSAF.</p>
+    </div></details>
+    <p>Aucune donnée ne quitte ton appareil (calculs et scénarios restent dans ton navigateur). Fait par <a href="https://github.com/bartholoneo" target="_blank" rel="noopener">Bartholoneo</a> <span id="footerBuyWrap"> · <a id="footerBuy" href="#" target="_blank" rel="noopener">Version complète 3 €</a></span> · <a href="confidentialite.html">Confidentialité</a> · <span id="versionLabel"></span></p>
   </footer>
 
   <dialog id="licenseDialog">

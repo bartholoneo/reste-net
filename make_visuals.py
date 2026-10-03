@@ -5,6 +5,8 @@
   python make_visuals.py shots        → visuels/capture-*.png (Chrome headless sur dist/complet et docs/) + app/screenshots/comparateur.png
   python make_visuals.py all
 """
+import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -26,7 +28,7 @@ MARKER = (255, 231, 106)
 RED = (192, 57, 43)
 BLUE = (47, 95, 143)
 # Ordonnée (px) du haut de chaque recadrage dans les rendus pleine page ; à ajuster si la mise en page change.
-CROPS = {'comparateur': 1000, 'tresorerie': 2330, 'objectif': 3300, 'statut': 4220, 'inverse': 5560, 'gratuite': 530}
+# Les découpes (1366×768) sont calées sur la position réelle des sections, mesurée dans Chrome (voir measure()).
 TALL_FULL, TALL_FREE = 7000, 3600
 FONT_BOLD = str(ROOT / 'visuels' / 'fonts' / 'Caveat-Variable.ttf')
 FONT_REG = str(ROOT / 'visuels' / 'fonts' / 'PatrickHand-Regular.ttf')
@@ -209,12 +211,38 @@ def shot(url: str, out: Path, width: int = 1366, height: int = 768, dark: bool =
     time.sleep(0.2)
 
 
+MEASURE_JS = ("<script>setTimeout(function(){var o={};document.querySelectorAll('section.card').forEach(function(s){"
+              "o[s.id]=Math.round(s.getBoundingClientRect().top+scrollY)});document.title='POS'+JSON.stringify(o)},1500)</script>")
+
+
+def measure(src: Path, width: int = 1366, height: int = 7000) -> dict:
+    """Position verticale (px) du haut de chaque section, rendue par Chrome à la largeur donnée.
+    Une copie temporaire de la page, placée à côté de l'original pour garder ses ressources, écrit les positions dans <title>."""
+    tmp = src.with_name('_mesure_' + src.name)
+    tmp.write_text(src.read_text(encoding='utf-8').replace('</body>', MEASURE_JS + '</body>'), encoding='utf-8')
+    try:
+        profile = tempfile.mkdtemp(prefix='rn-pos-')
+        args = [chrome(), '--headless=new', '--disable-gpu', '--hide-scrollbars', f'--window-size={width},{height}',
+                f'--user-data-dir={profile}', '--no-first-run', '--virtual-time-budget=4000', '--dump-dom', tmp.as_uri() + '?theme=light']
+        out = subprocess.run(args, check=True, capture_output=True, timeout=90).stdout.decode('utf-8', 'replace')
+        m = re.search(r'<title>POS(\{.*?\})</title>', out)
+        if not m:
+            raise SystemExit('mesure des sections impossible (titre non trouvé)')
+        return json.loads(m.group(1))
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 def make_shots() -> None:
     VIS.mkdir(exist_ok=True)
     full = (ROOT / 'dist' / 'complet' / 'reste-net-complet.html').resolve()
     free = (ROOT / 'docs' / 'index.html').resolve()
     if not full.exists():
         raise SystemExit('Lance d\'abord build.py')
+    pos_full, pos_free = measure(full), measure(free)
+    CROPS = {'comparateur': pos_full['resultsCard'] - 30, 'tresorerie': pos_full['cashCard'] - 30, 'objectif': pos_full['goalCard'] - 30,
+             'statut': pos_full['compareCard'] - 30, 'inverse': pos_full['inverseCard'] - 30, 'gratuite': max(0, pos_free['statusCard'] - 400)}
+    print('sections (px) :', CROPS)
     # Rendus pleine page puis recadrage en 1366×768 (le Store et Gumroad veulent des captures de cette taille).
     tall_full = VIS / '_full-light-tall.png'
     tall_free = VIS / '_free-light-tall.png'
