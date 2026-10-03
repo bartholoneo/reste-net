@@ -8,7 +8,7 @@
    payout : comment et quand l'argent arrive (minimum à atteindre, délai moyen en jours une fois le minimum atteint, rythme). */
 
 window.RESTE_NET_RATES = {
-  version: '1.1.0',
+  version: '1.1.1',
   verifiedOn: '24/09/2026',
   usdToEur: 0.90,
 

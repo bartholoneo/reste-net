@@ -14,6 +14,10 @@
   const pct = (x) => (Number.isFinite(x) ? x : 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %';
   const int = (x) => (Number.isFinite(x) ? x : 0).toLocaleString('fr-FR');
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* Aides : un texte court reste visible, un texte plus long se replie derrière un clic (relecture de Marius, 03/10). */
+  const MORE_MAX = 100;
+  const more = (label, html) => `<details class="more"><summary>${esc(label)}</summary><div class="more-body">${html}</div></details>`;
+  const note = (text, label) => (text && text.length > MORE_MAX) ? more(label || 'En savoir plus', `<p class="hint">${esc(text)}</p>`) : (text ? `<p class="hint">${esc(text)}</p>` : '');
   const days = (d) => {
     if (d == null) return '—';
     if (d <= 0) return 'le jour même';
@@ -112,7 +116,9 @@
 
   function renderOptions() {
     const r = rates();
-    $('platformOptions').innerHTML = r.platforms.filter((p) => state.selected.includes(p.id) && (p.options || []).length).map((p) => `
+    const withOptions = r.platforms.filter((p) => state.selected.includes(p.id) && (p.options || []).length);
+    $('platformOptionsWrap').hidden = !withOptions.length;
+    $('platformOptions').innerHTML = withOptions.map((p) => `
       <div class="option-row"><strong>${esc(p.name)}</strong> ${p.options.map((o) => `
         <label><input type="checkbox" name="opt-${p.id}-${o.id}" data-platform="${p.id}" data-option="${o.id}" ${state.options[p.id][o.id] ? 'checked' : ''}> ${esc(o.label)}</label>`).join('')}</div>`).join('');
     $('platformOptions').querySelectorAll('input').forEach((inp) => inp.addEventListener('change', () => {
@@ -128,10 +134,10 @@
     const st = r.statuses.find((x) => x.id === state.statusId);
     $('vl').disabled = !st || st.versementLiberatoire == null;
     $('acre').disabled = !st || !st.social;
-    $('statusNote').textContent = st ? st.note : '';
+    $('statusNote').innerHTML = st ? note(st.note, 'À savoir sur ce statut') : '';
     const b = DEFAULTS.irBrackets;
-    const txt = b.map((x, i) => `${x.rate} % ${x.upTo == null ? `au-delà de ${int(b[i - 1].upTo)} €` : `jusqu'à ${int(x.upTo)} €`}`).join(' · ');
-    $('tmiHint').textContent = `Barème 2026 (revenus 2025), par part : ${txt}. Saisis ton revenu imposable par part et la tranche se choisit toute seule.`;
+    const txt = b.map((x, i) => `<li>${x.rate} % ${x.upTo == null ? `au-delà de ${int(b[i - 1].upTo)} €` : `jusqu'à ${int(x.upTo)} €`}</li>`).join('');
+    $('tmiHint').innerHTML = more('Voir le barème 2026', `<p class="hint">Barème 2026 (revenus 2025), par part de quotient familial :</p><ul class="hint list">${txt}</ul>`);
   }
   function autoTmi() {
     if (!(state.otherIncome > 0)) return;
@@ -167,7 +173,7 @@
     const full = state.edition === 'full';
     const monthly = full && state.nSales > 1;
     renderChart(results);
-    if (!results.length) { $('results').innerHTML = '<p class="hint">Choisis au moins une plateforme.</p>'; $('resultsHint').textContent = ''; return; }
+    if (!results.length) { $('results').innerHTML = '<p class="hint">Choisis au moins une plateforme.</p>'; $('resultsHint').innerHTML = ''; return; }
 
     $('results').innerHTML = results.map((res, i) => {
       const p = r.platforms.find((x) => x.id === res.platformId);
@@ -213,13 +219,15 @@
         <div class="r-body">
           <table class="lines"><tbody>${lines.map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td></tr>`).join('')}</tbody></table>
           ${monthly ? `<table class="lines month"><tbody>${monthLines.map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td></tr>`).join('')}</tbody></table>` : ''}
-          <p class="hint">${esc(p.note)} Retrait : ${esc(p.withdrawal.label)}.${esc(vat)}${warn.length ? ' <span class="warn">' + esc(warn.join(' ')) + '</span>' : ''}</p>
+          ${warn.length ? `<p class="hint warn">${esc(warn.join(' '))}</p>` : ''}
+          ${more('À savoir sur ' + p.name, `<p class="hint">${esc(p.note)}</p><p class="hint">Retrait : ${esc(p.withdrawal.label)}.${esc(vat)}</p>`)}
         </div></details>`;
     }).join('');
     const annual = state.price * Math.max(1, state.nSales) * 12;
     $('resultsHint').innerHTML = full
-      ? `À ce rythme (${state.nSales} vente${state.nSales > 1 ? 's' : ''} par mois), tu encaisses ${eur(annual)} par an : l'impôt et les prélèvements sont estimés sur cette base, avec l'abattement minimum de 305 €. Sur le mois : les frais fixes de retrait et les abonnements s'ajoutent.`
-      : `Hors frais fixes de retrait, cotisations et impôt. La <a href="${esc(buyUrl())}" target="_blank" rel="noopener">version complète</a> compare toutes les plateformes, ajoute ton statut, et te dit qui te paie en premier.`;
+      ? `<p class="hint">À ce rythme (${state.nSales} vente${state.nSales > 1 ? 's' : ''} par mois), tu encaisses ${eur(annual)} par an.</p>` +
+        more('Comment l\'impôt est estimé', `<p class="hint">L'impôt et les prélèvements sont calculés sur ces recettes annuelles, avec l'abattement minimum de 305 €, puis ramenés au mois. Sur le mois, les frais fixes de retrait et les abonnements s'ajoutent.</p>`)
+      : `<p class="hint">Hors frais fixes de retrait, cotisations et impôt : la <a href="${esc(buyUrl())}" target="_blank" rel="noopener">version complète</a> les ajoute.</p>`;
   }
 
   /* ---------- Trésorerie ---------- */
@@ -235,7 +243,7 @@
         <td><b>${x.fp.reachable ? days(x.fp.days) : 'jamais (net nul)'}</b>${x.fp.monthsToMinimum > 1 ? `<br><small>${x.fp.monthsToMinimum} mois pour atteindre le seuil</small>` : ''}</td>
         <td>${x.minEur > 0 ? eur(x.minEur) : 'aucun'}</td>
         <td class="small">${esc(x.payout ? x.payout.label : '')}</td></tr>`).join('')}</tbody></table>
-      <p class="hint">Hypothèses : ventes régulières réparties sur le mois, délais moyens observés, pas de litige. Un seuil non atteint en un mois repousse le premier versement d'autant : c'est ce qui rend un store à 15 % parfois moins intéressant qu'une plateforme à 20 % qui paie dès le premier euro.</p>` : '';
+      ${more('Hypothèses du calcul', `<p class="hint">Ventes régulières réparties sur le mois, délais moyens observés, pas de litige. Un seuil non atteint en un mois repousse le premier versement d'autant : c'est ce qui rend un store à 15 % parfois moins intéressant qu'une plateforme à 20 % qui paie dès le premier euro.</p>`)}` : '';
   }
 
   /* ---------- Objectif et point mort ---------- */
@@ -253,7 +261,7 @@
         <td><b>${x.need == null ? 'impossible à ce prix' : int(x.need) + (x.need > 1 ? ' ventes' : ' vente')}</b>${x.need != null ? `<br><small>soit ${(x.need / 30).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} par jour</small>` : ''}</td>
         <td>${x.breakEven == null ? 'impossible' : (x.breakEven === 0 ? 'aucun frais fixe' : int(x.breakEven))}</td>
         <td class="${x.now < 0 ? 'neg' : ''}">${eur(x.now)}</td></tr>`).join('')}</tbody></table>
-      <p class="hint">Le nombre de ventes tient compte des frais fixes de retrait, des abonnements et de l'impôt annualisé à ce rythme : il n'est pas une simple division.</p>` : '';
+      ${more('Comment c\'est calculé', `<p class="hint">Le nombre de ventes tient compte des frais fixes de retrait, des abonnements et de l'impôt annualisé à ce rythme : ce n'est pas une simple division.</p>`)}` : '';
   }
 
   /* ---------- Quel statut ? ---------- */
@@ -276,7 +284,8 @@
     $('compareResults').innerHTML = `<table class="compare"><thead><tr><th>Statut</th><th>Cotisations / an</th><th>Impôt / an</th><th>Net / an</th><th>Net / an en %</th></tr></thead><tbody>
       ${rows.map((x, i) => `<tr class="${i === 0 ? 'best-row' : ''}${x.statusId === cur ? ' current' : ''}"><td>${i === 0 ? '<span class="star">★</span> ' : ''}${esc(x.statusName)}${x.statusId === cur ? ' <small>(ton choix)</small>' : ''}</td>
         <td>${eur(x.annualSocial)}</td><td>${eur(x.annualTax)}</td><td><b>${eur(x.annualNet)}</b></td><td>${x.annualGross > 0 ? (x.annualNet / x.annualGross * 100).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' %' : '—'}</td></tr>`).join('')}</tbody></table>
-      <p class="hint">Sur ${esc(p.name)}, ${state.nSales} vente${state.nSales > 1 ? 's' : ''} par mois à ${eur(state.price)}, avec tes options (ACRE, versement libératoire, TMI ${state.tmi} %). Attention : le statut se choisit d'abord selon la nature de l'activité (un logiciel, un service ou un conseil relèvent du BNC ou du BIC services, jamais de la vente de marchandises), et « particulier » ne vaut que pour une activité ponctuelle : au-delà, l'immatriculation s'impose, quel que soit le résultat du calcul.</p>`;
+      <p class="hint">Sur ${esc(p.name)}, ${state.nSales} vente${state.nSales > 1 ? 's' : ''} par mois à ${eur(state.price)}${state.acre ? ', ACRE' : ''}${state.vl ? ', versement libératoire' : ''}, TMI ${state.tmi} %.</p>
+      ${more('Attention : le statut ne se choisit pas que sur le chiffre', `<p class="hint">Le statut dépend d'abord de la nature de l'activité : un logiciel, un service ou un conseil relèvent du BNC ou du BIC services, jamais de la vente de marchandises. Et « particulier » ne vaut que pour une activité ponctuelle : au-delà, l'immatriculation s'impose, quel que soit le résultat du calcul.</p>`)}`;
   }
 
   /* ---------- Jalons ---------- */
@@ -290,9 +299,10 @@
       if (t.reached === null) when = 'à vérifier avec ton avis d\'imposition';
       else if (t.reached) when = t.whenMonthly ? 'dès maintenant' : (t.monthReached ? `franchi au mois ${t.monthReached}` : 'franchi');
       else when = t.amount > 0 && monthlyCA > 0 ? `pas à ce rythme (il faudrait ${eur(t.amount / 12)} par mois, soit ${int(Math.ceil(t.amount / 12 / Math.max(0.01, state.price)))} ventes)` : 'non concerné';
-      return `<li class="${t.reached === true ? 'hit' : (t.reached === false ? 'far' : 'check')}"><span class="mark">${t.reached === true ? '✓' : (t.reached === false ? '○' : '?')}</span>
-        <div><b>${esc(t.label)}</b>${t.amount > 1 && !t.isRfr ? ` <small>· ${eur(t.amount)} / an</small>` : (t.amount === 1 ? ' <small>· dès le premier euro</small>' : '')}${t.verified ? '' : ' <small class="warn">· n.v.</small>'}<br><span class="when">${esc(when)}</span><br><small>${esc(t.detail)}</small></div></li>`;
-    }).join('') + `<li class="hint">Recettes annuelles à ce rythme : ${eur(annualCA)} (prix client, par prudence). Les seuils marqués « n.v. » changent souvent : vérifie sur impots.gouv.fr et urssaf.fr.</li>`;
+      return `<li class="${t.reached === true ? 'hit' : (t.reached === false ? 'far' : 'check')}"><details class="jalon"><summary><span class="mark">${t.reached === true ? '✓' : (t.reached === false ? '○' : '?')}</span>
+        <div><b>${esc(t.label)}</b>${t.amount > 1 && !t.isRfr ? ` <small>· ${eur(t.amount)} / an</small>` : (t.amount === 1 ? ' <small>· dès le premier euro</small>' : '')}${t.verified ? '' : ' <small class="warn">· n.v.</small>'}<br><span class="when">${esc(when)}</span></div></summary>
+        <small>${esc(t.detail)}</small></details></li>`;
+    }).join('') + `<li class="hint">Recettes annuelles à ce rythme : ${eur(annualCA)} (prix client, par prudence).${list.some((t) => !t.verified) ? more('Seuils marqués « n.v. »', '<p class="hint">Ces seuils changent souvent et n\'ont pas été vérifiés pour 2026 : vérifie sur impots.gouv.fr et urssaf.fr avant de t\'y fier.</p>') : ''}</li>`;
   }
 
   /* ---------- Calcul inverse ---------- */
@@ -437,7 +447,7 @@
     document.documentElement.dataset.edition = state.edition;
     $('editionBadge').textContent = full ? 'Version complète' : 'Version gratuite';
     $('editionBadge').className = 'badge ' + (full ? 'badge-full' : 'badge-free');
-    $('buyBtn').hidden = full; $('licenseBtn').hidden = full; $('footerBuy').hidden = full;
+    $('buyBtn').hidden = full; $('licenseBtn').hidden = full; $('footerBuyWrap').hidden = full;
     [$('buyBtn'), $('footerBuy'), $('dialogBuy')].forEach((a) => { a.href = buyUrl(); });
     document.querySelectorAll('.full-only').forEach((el) => { el.hidden = !full; });
     document.querySelectorAll('.lockable').forEach((card) => {
@@ -489,6 +499,8 @@
   function renderAll() { renderResults(); renderCash(); renderGoal(); renderCompare(); renderMilestones(); renderInverse(); }
 
   function bind() {
+    window.addEventListener('beforeprint', () => document.querySelectorAll('details.more:not([open])').forEach((d) => { d.open = true; d.dataset.printOpened = '1'; }));
+    window.addEventListener('afterprint', () => document.querySelectorAll('details.more[data-print-opened]').forEach((d) => { d.open = false; delete d.dataset.printOpened; }));
     const num = (id, key, min, after) => $(id).addEventListener('input', () => { const v = Number($(id).value); state[key] = Number.isFinite(v) ? Math.max(min, v) : min; if (after) after(); renderAll(); });
     num('price', 'price', 0, autoTmi); num('nSales', 'nSales', 1, autoTmi); num('nWithdraw', 'nWithdraw', 0); num('targetNet', 'targetNet', 0);
     num('targetMonthly', 'targetMonthly', 0); num('fixedCosts', 'fixedCosts', 0); num('otherIncome', 'otherIncome', 0, autoTmi);
