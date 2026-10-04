@@ -5,10 +5,11 @@
      'gross'  = prix payé par le client (plateforme intermédiaire, tu es le vendeur) ;
      'payout' = montant reversé (la plateforme est vendeur officiel / Merchant of Record).
    vatByPlatform : la plateforme ajoute la TVA du pays du client au prix que tu fixes (vendeur officiel).
-   payout : comment et quand l'argent arrive (minimum à atteindre, délai moyen en jours une fois le minimum atteint, rythme). */
+   payout : comment et quand l'argent arrive (minimum à atteindre, délai moyen en jours une fois le minimum atteint, rythme).
+   minPrice : prix minimum accepté par la plateforme pour une vente (avertissement dans l'interface). */
 
 window.RESTE_NET_RATES = {
-  version: '1.1.1',
+  version: '1.1.2',
   verifiedOn: '24/09/2026',
   usdToEur: 0.90,
 
@@ -45,18 +46,23 @@ window.RESTE_NET_RATES = {
     },
     {
       id: 'comeup', name: 'ComeUp', group: 'Services freelance',
-      pct: 0, fixed: 1.20, fixedCurrency: 'EUR',
+      pct: 20, fixed: 0, fixedCurrency: 'EUR',
       caBasis: 'gross', vatByPlatform: false,
+      minPrice: { amount: 15, currency: 'EUR' },
       withdrawal: { fixed: 0.50, fixedCurrency: 'EUR', pct: 0, minimum: 1, minimumCurrency: 'EUR', label: 'Hyperwallet : 0,50 € vers IBAN, 0 € vers carte bancaire, dès 1 €' },
       payout: { minimum: 1, minimumCurrency: 'EUR', delayDays: 9, schedule: 'ondemand', label: 'Crédit après validation de la commande (jusqu\'à 8 jours), retrait dès 1 €, validé en 3 à 5 jours ouvrés' },
-      options: [{ id: 'card', label: 'Retrait vers carte bancaire (gratuit)', withdrawalFixedOverride: 0, default: true }],
-      note: 'Commission vendeur 1 € HT (1,20 € TTC) par commande. L\'acheteur paie en plus 5 % + 0,30 €.',
+      options: [
+        { id: 'card', label: 'Retrait vers carte bancaire (gratuit)', withdrawalFixedOverride: 0, default: true },
+        { id: 'plus', label: 'ComeUp Plus (1 € HT par commande, 13 € HT par mois)', pctOverride: 0, fixedOverride: 1.20, monthlySub: 15.60, monthlySubCurrency: 'EUR' },
+      ],
+      note: 'Commission 20 % du prix sans abonnement ; 1 € HT par commande avec ComeUp Plus (13 € HT par mois, soit 15,60 € TTC). Prix minimum d\'un service : 15 €. L\'acheteur paie en plus des frais de paiement. Conditions vérifiées le 04/10/2026.',
       verified: true,
     },
     {
       id: 'fiverr', name: 'Fiverr', group: 'Services freelance',
       pct: 20, fixed: 0, fixedCurrency: 'USD',
       caBasis: 'gross', vatByPlatform: false,
+      minPrice: { amount: 5, currency: 'USD' },
       withdrawal: { fixed: 3, fixedCurrency: 'USD', pct: 2, label: 'Payoneer : 3 $ par retrait + change ≈ 2 % (estimation)' },
       payout: { minimum: 0, minimumCurrency: 'USD', delayDays: 17, schedule: 'ondemand', label: 'Argent bloqué 14 jours après chaque commande, puis retrait Payoneer 1 à 3 jours' },
       options: [],

@@ -154,8 +154,8 @@ def make_cover() -> None:
     x0 = 520
     d.text((x0, 60), 'Ce que tu touches vraiment sur une vente à 5 €', font=font_title(42), fill=INK)
     d.text((x0, 125), 'Frais de plateforme, retraits, cotisations URSSAF 2026, impôt.', font=font(FONT_REG, 26), fill=PENCIL)
-    rows = engine_nets(5.0, [('direct', 'Entre particuliers'), ('polar', 'Polar.sh'), ('gumroad', 'Gumroad'), ('comeup', 'ComeUp'),
-                             ('msstore', 'Microsoft Store'), ('fiverr', 'Fiverr'), ('itch', 'itch.io')])
+    rows = engine_nets(5.0, [('direct', 'Entre particuliers'), ('polar', 'Polar.sh'), ('gumroad', 'Gumroad'), ('gplay', 'Google Play'),
+                             ('msstore', 'Microsoft Store'), ('fiverr', 'Fiverr'), ('itch', 'itch.io')])  # ComeUp absent : prix minimum 15 €
     y = 185
     fb, fr = font_title(38), font(FONT_REG, 27)
     for i, (name, net, ratio) in enumerate(rows):

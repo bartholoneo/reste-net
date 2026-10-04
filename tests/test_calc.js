@@ -15,8 +15,10 @@ check('Gumroad 5 €', C.compute(P('gumroad'), { ...base, price: 5 }).perSale.ne
 check('Polar 2 €', C.compute(P('polar'), { ...base, price: 2 }).perSale.received, 1.45);
 check('Polar 5 €', C.compute(P('polar'), { ...base, price: 5 }).perSale.received, 4.30);
 check('Stripe 2 €', C.compute(P('stripe'), { ...base, price: 2 }).perSale.net, 1.72);
-check('ComeUp 5 € retrait carte (mois)', C.compute(P('comeup'), { ...base, price: 5, options: { card: true } }).month.net, 3.80);
-check('ComeUp 5 € retrait IBAN (mois)', C.compute(P('comeup'), { ...base, price: 5 }).month.net, 3.30);
+check('ComeUp 15 € retrait carte (mois, 20 %)', C.compute(P('comeup'), { ...base, price: 15, options: { card: true } }).month.net, 12.00);
+check('ComeUp 15 € retrait IBAN (mois, 20 %)', C.compute(P('comeup'), { ...base, price: 15 }).month.net, 11.50);
+check('ComeUp Plus 15 € (par vente, 1 € HT)', C.compute(P('comeup'), { ...base, price: 15, options: { card: true, plus: true } }).perSale.net, 13.80);
+check('ComeUp Plus 15 € (mois, 1 vente, abonnement 15,60 €)', C.compute(P('comeup'), { ...base, price: 15, options: { card: true, plus: true } }).month.net, -1.80);
 check('BNC 100 € direct (par vente)', C.compute(P('direct'), { ...base, price: 100, status: S('bnc'), tax: { tmi: 0 } }).perSale.net, 73.70);
 check('Particulier 100 € direct (mois, annualisé 1200 €)', C.compute(P('direct'), { ...base, price: 100, status: S('particulier'), tax: { tmi: 11 } }).month.net, 100 - ((1200 - Math.max(305, 408)) * (0.11 + 0.172)) / 12);
 check('Particulier 20 € direct (mois, < 305 €/an)', C.compute(P('direct'), { ...base, price: 20, status: S('particulier'), tax: { tmi: 30 } }).month.net, 20);

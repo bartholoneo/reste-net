@@ -18,6 +18,7 @@
   const MORE_MAX = 100;
   const more = (label, html) => `<details class="more"><summary>${esc(label)}</summary><div class="more-body">${html}</div></details>`;
   const note = (text, label) => (text && text.length > MORE_MAX) ? more(label || 'En savoir plus', `<p class="hint">${esc(text)}</p>`) : (text ? `<p class="hint">${esc(text)}</p>` : '');
+  const minPriceEur = (p, r) => (p.minPrice ? C.toEur(p.minPrice.amount, p.minPrice.currency, r.usdToEur) : 0);
   const days = (d) => {
     if (d == null) return '—';
     if (d <= 0) return 'le jour même';
@@ -210,6 +211,8 @@
       if (p.withdrawal.minimum && C.toEur(p.withdrawal.minimum, p.withdrawal.minimumCurrency, r.usdToEur) > (monthly ? m.received : s.received) && (monthly ? m.received : s.received) > 0) {
         warn.push(`Seuil de retrait ${p.withdrawal.minimum} ${p.withdrawal.minimumCurrency === 'USD' ? '$' : '€'} : l'argent attend d'atteindre le seuil.`);
       }
+      const minP = minPriceEur(p, r);
+      if (minP && s.price > 0 && s.price < minP) warn.push(`Prix minimum sur ${p.name} : ${p.minPrice.amount} ${p.minPrice.currency === 'USD' ? '$' : '€'}. Ce prix serait refusé.`);
       if (s.price > 0 && s.net <= 0) warn.push('Prix trop bas pour cette plateforme : les frais dépassent ce que tu toucherais.');
       if (!p.verified) warn.push('Taux non vérifiés dans l\'étude.');
       if (p.estimated) warn.push('Estimation pour : ' + p.estimated.join(', ') + '.');
@@ -311,10 +314,10 @@
     const rows = selectedPlatforms().map((p) => {
       const price = C.inversePrice(p, currentInput(p.id), state.targetNet);
       const check = price == null ? null : C.compute(p, Object.assign({}, currentInput(p.id), { price: price })).perSale.net;
-      return { name: p.name, price: price, check: check };
+      return { name: p.name, price: price, check: check, min: minPriceEur(p, rates()) };
     }).sort((a, b) => (a.price == null ? 1e12 : a.price) - (b.price == null ? 1e12 : b.price));
     $('inverseResults').innerHTML = rows.length ? `<table class="compare"><thead><tr><th>Plateforme</th><th>Prix à afficher</th><th>Net obtenu</th></tr></thead><tbody>
-      ${rows.map((x) => `<tr><td>${esc(x.name)}</td><td>${x.price == null ? '—' : '<b>' + eur(x.price) + '</b>'}</td><td>${x.check == null ? 'impossible' : eur(x.check)}</td></tr>`).join('')}</tbody></table>` : '';
+      ${rows.map((x) => `<tr><td>${esc(x.name)}</td><td>${x.price == null ? '—' : '<b>' + eur(x.price) + '</b>'}${x.price != null && x.min && x.price < x.min ? `<br><small class="warn">prix minimum ${eur(x.min)}</small>` : ''}</td><td>${x.check == null ? 'impossible' : eur(x.check)}</td></tr>`).join('')}</tbody></table>` : '';
   }
 
   /* ---------- Partage : lien et résumé ---------- */
