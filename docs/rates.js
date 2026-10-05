@@ -179,11 +179,11 @@ window.RESTE_NET_RATES = {
   ],
 };
 
-/* Identifiants de licence : à renseigner après création des produits (voir PUBLICATION.md). */
+/* Identifiants de licence (produits créés le 05/10/2026, voir PUBLICATION.md). */
 window.LICENSE_CONFIG = {
-  polarOrganizationId: '',
-  gumroadProductId: '',
+  polarOrganizationId: '0d907461-eaa2-4c7a-9f93-54aecd76cec3',
+  gumroadProductId: '8557jCW8vhSnBS5qYqFeTg==',
   buyUrlGumroad: 'https://bartholoneo.gumroad.com/l/reste-net',
-  buyUrlPolar: 'https://polar.sh/bartholoneo/products/reste-net',
+  buyUrlPolar: 'https://buy.polar.sh/polar_cl_IPiPm4UMucMyvzYY1cInGWIQGjycnLuc0kn1p3k69T0',
   siteUrl: 'https://bartholoneo.github.io/reste-net/',
 };
